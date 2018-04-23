@@ -18,7 +18,5 @@ A script for easy installation of the conda enviroments is included.
 ./setup.sh
 ```
 
-Be aware of the fact that the script will overwrite conda enviroments called `tensorflow`
-
 ## References
 * Talk given 2017.11, see https://gitlab.lhotse.ov.otto.de/tesla/information-hub/tree/master/presentations/17_11_bob-andrews.
