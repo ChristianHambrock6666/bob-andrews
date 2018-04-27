@@ -170,7 +170,7 @@ with tf.Session() as sess:
 
         trainer.print_info_()
 
-    evaluator.setup_lime_explainer(sess, loader.get_train_sentence_char_lists())
+    #evaluator.setup_lime_explainer(sess, loader.get_train_sentence_char_lists())
     #  ------- information part just for visualization ------------------------------------------------------------
     # plot loss and accuracy
     tex_writer.addSection("Convergence plots")

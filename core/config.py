@@ -17,7 +17,7 @@ class Config:
 
         self.n_classes = 2  # final classes to predict
 
-        self.epochs = 1  # number of epochs (epoch = whole train data processed) to train
+        self.epochs = 10  # number of epochs (epoch = whole train data processed) to train
         self.shuffle = True  # True if after each epoch train data is shuffled
 
         self.batch_size = 50
