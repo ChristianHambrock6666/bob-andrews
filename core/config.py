@@ -27,7 +27,7 @@ class Config:
         self.strides1 = 3  # strides in the first layer (chars to 'syllables')
         self.strides2 = 2  # strides in the second layer ('syllables' to 'words')
 
-        self.allowed_chars = "abcdefghijklmnopqrstuvwxyzäöüß_"
+        self.allowed_chars = "abcdefghijklmnopqrstuvwxyzäöüß "
         self.default_char = '-'  # set this if default char is translated back from tensor
         self.string_length = 200
         self.n_chars = len(self.allowed_chars) + 1  # +1 being the default class
