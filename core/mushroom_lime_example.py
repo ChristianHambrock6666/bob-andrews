@@ -1,24 +1,12 @@
-import subprocess
-import tensorflow as tf
 import numpy as np
-import sklearn.datasets
 import sklearn.ensemble
-from sklearn.ensemble import RandomForestClassifier
-
-import core.loader as ld
-import core.trainer as tn
-import core.network as nw
-import core.config as cf
-import core.evaluator as ev
-import matplotlib.pyplot as plt
-from LaTeXTools.LATEXwriter import LATEXwriter as TeXwriter
-
-import lime
 import lime.lime_tabular
 
-# from __future__ import print_function
 
 
+# ------------------------------------------------------------------------------------------------------
+# prepare data: ----------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 data = np.genfromtxt('../data/agaricus-lepiota.data', delimiter=',', dtype='<U20')
 labels = data[:, 0]
 le = sklearn.preprocessing.LabelEncoder()
@@ -28,9 +16,7 @@ class_names = le.classes_
 data = data[:, 1:]
 
 categorical_features = range(22)
-feature_names = 'cap-shape,cap-surface,cap-color,bruises?,odor,gill-attachment,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-surface-above-ring, stalk-surface-below-ring, stalk-color-above-ring,stalk-color-below-ring,veil-type,veil-color,ring-number,ring-type,spore-print-color,population,habitat'.split(
-    ',')
-
+feature_names = 'cap-shape,cap-surface,cap-color,bruises?,odor,gill-attachment,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-surface-above-ring, stalk-surface-below-ring, stalk-color-above-ring,stalk-color-below-ring,veil-type,veil-color,ring-number,ring-type,spore-print-color,population,habitat'.split(',')
 categorical_names = '''bell=b,conical=c,convex=x,flat=f,knobbed=k,sunken=s
 fibrous=f,grooves=g,scaly=y,smooth=s
 brown=n,buff=b,cinnamon=c,gray=g,green=r,pink=p,purple=u,red=e,white=w,yellow=y
@@ -54,8 +40,7 @@ black=k,brown=n,buff=b,chocolate=h,green=r,orange=o,purple=u,white=w,yellow=y
 abundant=a,clustered=c,numerous=n,scattered=s,several=v,solitary=y
 grasses=g,leaves=l,meadows=m,paths=p,urban=u,waste=w,woods=d'''.split('\n')
 for j, names in enumerate(categorical_names):
-    values = names.split(',')
-    values = dict([(x.split('=')[1], x.split('=')[0]) for x in values])
+    values = dict([(x.split('=')[1], x.split('=')[0]) for x in names.split(',')])
     data[:, j] = np.array(list(map(lambda x: values[x], data[:, j])))
 
 categorical_names = {}
@@ -69,32 +54,30 @@ print(data[:, 0])
 print(categorical_names[0])
 
 data = data.astype(float)
-
 train, test, labels_train, labels_test = sklearn.model_selection.train_test_split(data, labels, train_size=0.80)
 
 encoder = sklearn.preprocessing.OneHotEncoder(categorical_features=categorical_features)
 encoder.fit(data)
 encoded_train = encoder.transform(train)
 
+
+
+# ------------------------------------------------------------------------------------------------------
+# fit model: -------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 rf = sklearn.ensemble.RandomForestClassifier(n_estimators=500)
 rf.fit(encoded_train, labels_train)
 
-RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                       max_depth=None, max_features='auto', max_leaf_nodes=None,
-                       min_impurity_split=1e-07, min_samples_leaf=1,
-                       min_samples_split=2, min_weight_fraction_leaf=0.0,
-                       n_estimators=500, n_jobs=1, oob_score=False, random_state=None,
-                       verbose=0, warm_start=False)
+
+
+# ------------------------------------------------------------------------------------------------------
+# LIME from here: --------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 predict_fn = lambda x: rf.predict_proba(encoder.transform(x))
-sklearn.metrics.accuracy_score(labels_test, rf.predict(encoder.transform(test)))
-
-np.random.seed(1)
-
 explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['edible', 'poisonous'],
                                                    feature_names=feature_names,
                                                    categorical_features=categorical_features,
                                                    categorical_names=categorical_names, kernel_width=3, verbose=False)
-
 i = 127
 exp = explainer.explain_instance(test[i], predict_fn, num_features=5)
 exp.save_to_file("../output/test_html.out")
