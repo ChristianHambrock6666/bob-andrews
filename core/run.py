@@ -90,5 +90,27 @@ with tf.Session() as sess:
         tex_writer.addText(",\quad {\\footnotesize $Gray{truth:" + str(round(truth[1], 2)) + ",~pred:~" + str(
             round(pred0[1], 2)) + "}}\n\n")
 
+    # ------------------------------------------------------------------------------------------------------
+    # LIME from here: --------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------
+    feature_names = [str(num) for num in range(200)]
+    categorical_features = range(200)
+    categorical_names = [['-'] + [char_trf.num2char[ch+1] for ch in range(len(char_trf.num2char))] for num in range(200)]
+    train = np.array([np.array(char_trf.tensor_to_numbers(tensor)) for tensor in loader.get_next_train_batch(1000)[0]])
+
+    predict_fn = lambda num_sentences: np.array([
+        np.array(evaluator.predict(sess, char_trf.numbers_to_tensor(num_sentence)))
+        for num_sentence in num_sentences])
+
+    explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['yes', 'no'],
+                                                   feature_names=feature_names,
+                                                   categorical_features=categorical_features,
+                                                   categorical_names=categorical_names, kernel_width=3, verbose=False)
+
+    i = 127
+    exp = explainer.explain_instance(train[i], predict_fn, num_features=5)
+    exp.save_to_file("../output/testXX_html.out")
+    d = None
+
 tex_writer.compile()
 subprocess.call(["xdg-open", tex_writer.outputFile])

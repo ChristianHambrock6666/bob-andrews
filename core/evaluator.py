@@ -28,6 +28,9 @@ class Evaluator(object):
         self.x = tf.placeholder(tf.float32, [None, self.cf.string_length, self.cf.n_chars])
         self.pred = self.network.predict(self.x)
 
+    def predict(self, sess, tensor):
+        return sess.run(self.pred, feed_dict={self.x: [tensor]})[0]
+
     def importanize_tensor_sentence(self, sess, tensor):
         """check character importance for sentence. tensor_batch: [batch_size, num_letters, num_chars]"""
         pred0 = sess.run(self.pred, feed_dict={self.x: [tensor]})[0]  # the [0] because of batch processing

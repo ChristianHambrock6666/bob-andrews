@@ -72,5 +72,5 @@ class Network:
 
     def layer4(self, in_tensor):
         """output feed forward layer"""
-        return tf.nn.sigmoid(tf.matmul(in_tensor, self.weights['out']) + self.biases['out'])
+        return tf.nn.softmax(tf.matmul(in_tensor, self.weights['out']) + self.biases['out'])
 
