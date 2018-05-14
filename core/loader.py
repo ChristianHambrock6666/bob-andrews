@@ -121,7 +121,7 @@ class CharTrf(object):
         return np.array([self.char_to_one_hot(char) for char in in_string])
 
     def tensor_to_numbers(self, in_tensor):
-        return [np.argmax(vec) for vec in in_tensor]
+        return [float(np.argmax(vec)) for vec in in_tensor]
 
     def numbers_to_tensor(self, in_numbers):
         return [self.one_hot(num) for num in in_numbers]
