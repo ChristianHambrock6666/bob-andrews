@@ -30,6 +30,7 @@ char_trf = loader.ct
 network = nw.Network(cf)
 trainer = tn.Trainer(cf, network)
 evaluator = ev.Evaluator(cf, network, char_trf)
+test_features, test_labels = loader.get_test_data()
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -43,8 +44,7 @@ with tf.Session() as sess:
         output_map_batch["cost_train"].append(current_output[1])
 
         if loader.new_epoch:
-            x, y = loader.get_test_data()
-            current_test_output = trainer.test(sess, x, y)
+            current_test_output = trainer.test(sess, test_features, test_labels)
 
             output_map_epoch["epoch"].append(loader.epochs)
             output_map_epoch["batch_count"].append(loader.batches)
@@ -75,42 +75,67 @@ with tf.Session() as sess:
     \\vspace{1cm}
     \n\n
     """)
-    batch_x, batch_y = loader.get_next_train_batch(cf.batch_size, shuffle=cf.shuffle)
-    for tensor_sentence, truth in zip(batch_x, batch_y):
+    feature_names = [str(num) for num in range(200)]
+    categorical_features = range(200)
+    categorical_names = [['-'] + [char_trf.num2char[ch+1] for ch in range(len(char_trf.num2char))] for num in range(200)]
+    train = np.array([np.array(char_trf.tensor_to_numbers(tensor)) for tensor in loader.get_next_train_batch(1000)[0]])
+
+    # --------LIME:-------------------------------------------------------
+    predict_fn = lambda num_sentences: np.array([
+        np.array(evaluator.predict(sess, char_trf.numbers_to_tensor(num_sentence)))
+        for num_sentence in num_sentences])
+    explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['yes', 'no'],
+                                                       feature_names=feature_names,
+                                                       categorical_features=categorical_features,
+                                                       categorical_names=categorical_names, kernel_width=3, verbose=False)
+
+    for tensor_sentence, truth in zip(test_features[:25], test_labels[:25]):
+        sentence = char_trf.tensor_to_string(tensor_sentence)
+
+        tex_writer.addText("\n\nold guess:\n\n")
         importance, pred0 = evaluator.importanize_tensor_sentence(sess, tensor_sentence)
 
         for i in range(len(importance)):
-            sentence = char_trf.tensor_to_string(tensor_sentence)
+
             if not sentence[i] == " ":
                 tex_char = "{\color[rgb]{" + str(round(min(importance[i] * 100, 1), 3)) + ",0,0} " + sentence[i] + "}"
             else:
                 tex_char = " "
             tex_writer.addText(tex_char)
 
+        # --------LIME:-------------------------------------------------------
+        tex_writer.addText("\n\nlime:\n\n")
+        char_importances_lime = explainer.explain_instance(
+            np.array(char_trf.tensor_to_numbers(tensor_sentence)),
+            predict_fn, num_features=5).as_map()[1]
+        dic = dict(char_importances_lime)
+        max_importance = max([abs(v) for v in dic.values()])
+        print(char_importances_lime)
+        for i in range(len(importance)):
+            if (not sentence[i] == " ") and (i in dic.keys()):
+                if dic[i] > 0:
+                    tex_char = "{\color[rgb]{0,0," + str(round(min(dic[i] / max_importance * 100, 1), 3)) + "} " + sentence[i] + "}"
+                else:
+                    tex_char = "{\color[rgb]{" + str(round(min(-dic[i] / max_importance * 100, 1), 3)) + ",0,0} " + sentence[i] + "}"
+            else:
+                tex_char = sentence[i]
+            tex_writer.addText(tex_char)
+
         tex_writer.addText(",\quad {\\footnotesize $Gray{truth:" + str(round(truth[1], 2)) + ",~pred:~" + str(
             round(pred0[1], 2)) + "}}\n\n")
 
-    # ------------------------------------------------------------------------------------------------------
-    # LIME from here: --------------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------
-    feature_names = [str(num) for num in range(200)]
-    categorical_features = range(200)
-    categorical_names = [['-'] + [char_trf.num2char[ch+1] for ch in range(len(char_trf.num2char))] for num in range(200)]
-    train = np.array([np.array(char_trf.tensor_to_numbers(tensor)) for tensor in loader.get_next_train_batch(1000)[0]])
 
-    predict_fn = lambda num_sentences: np.array([
-        np.array(evaluator.predict(sess, char_trf.numbers_to_tensor(num_sentence)))
-        for num_sentence in num_sentences])
 
-    explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['yes', 'no'],
-                                                   feature_names=feature_names,
-                                                   categorical_features=categorical_features,
-                                                   categorical_names=categorical_names, kernel_width=3, verbose=False)
 
-    i = 127
-    exp = explainer.explain_instance(train[i], predict_fn, num_features=5)
-    exp.save_to_file("../output/testXX_html.out")
-    d = None
+        d = None
+
+
+
+
+
+
+    #exp.save_to_file("../output/testXX_html.out")
+
 
 tex_writer.compile()
 subprocess.call(["xdg-open", tex_writer.outputFile])
