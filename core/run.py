@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from LaTeXTools.LATEXwriter import LATEXwriter as TeXwriter
 
 import lime
-import lime.lime_image
+import lime.lime_text
 import lime.lime_tabular
 
 np.random.seed(1)
@@ -85,18 +85,35 @@ with tf.Session() as sess:
     predict_fn = lambda num_sentences: np.array([
         np.array(evaluator.predict(sess, char_trf.numbers_to_tensor(num_sentence)))
         for num_sentence in num_sentences])
+
+    def predict_text_fn(txt_sentence):
+        ss = txt_sentence
+        while len(ss) < 200:
+            ss = ss + " "
+        ret = np.array(evaluator.predict(sess, char_trf.string_to_tensor(ss)))
+        return ret
+
+    predict_ss_fn = lambda txt_sentences: np.array([predict_text_fn(txt_sentence) for txt_sentence in txt_sentences])
+
+
+    # predict_from_text_fn = lambda txt_sentence: np.array([
+    #     np.array(evaluator.predict(sess, char_trf.string_to_tensor(txt_sentence)))
+    #     for txt_sentence in txt_sentence])
     explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['absent', 'contained'],
                                                        feature_names=feature_names,
                                                        categorical_features=categorical_features,
                                                        categorical_names=categorical_names, kernel_width=None, verbose=False)
 
+    explainer_text = lime.lime_text.LimeTextExplainer()
+
     for tensor_sentence, truth in zip(test_features[:100], test_labels[:100]):
         sentence = char_trf.tensor_to_string(tensor_sentence)
+        print(sentence)
+
+        # --------OLD:-------------------------------------------------------
         importance, pred0 = evaluator.importanize_tensor_sentence(sess, tensor_sentence)
-
         tex_writer.addText("\n\n {\\footnotesize $Gray{truth:" + str(round(truth[1], 2)) + ",~pred:~" + str(
-            round(pred0[1], 2)) + "}} (old, lime)\hrulefill\n\n")
-
+            round(pred0[1], 2)) + "}} (old, lime table, lime text)\hrulefill\n\n")
         for i in range(len(importance)):
 
             if not sentence[i] == " ":
@@ -105,23 +122,41 @@ with tf.Session() as sess:
                 tex_char = " "
             tex_writer.addText(tex_char)
 
-        # --------LIME:-------------------------------------------------------
+        # --------LIME Table:-------------------------------------------------------
         tex_writer.addText("\n\n")
         char_importances_lime = explainer.explain_instance(
             np.array(char_trf.tensor_to_numbers(tensor_sentence)),
             predict_fn, num_features=20).as_map()[1]
+
         dic = dict(char_importances_lime)
-        max_importance = max([abs(v) for v in dic.values()])
-        print(char_importances_lime)
+        sum_importance = sum([abs(v) for v in dic.values()])
         for i in range(len(importance)):
             if (not sentence[i] == " ") and (i in dic.keys()):
                 if dic[i] > 0:
-                    tex_char = "{\color[rgb]{" + str(round(min(dic[i] / max_importance * 100, 1), 3)) + ",0,0} " + sentence[i] + "}"
+                    tex_char = "{\color[rgb]{" + str(round(min(dic[i] / sum_importance * 100, 1), 3)) + ",0,0} " + sentence[i] + "}"
                 else:
-                    tex_char = "{\color[rgb]{0,0," + str(round(min(-dic[i] / max_importance * 100, 1), 3)) + "} " + sentence[i] + "}"
+                    tex_char = "{\color[rgb]{0,0," + str(round(min(-dic[i] / sum_importance * 100, 1), 3)) + "} " + sentence[i] + "}"
             else:
                 tex_char = sentence[i]
             tex_writer.addText(tex_char)
+
+        # --------LIME Text:-------------------------------------------------------
+        tex_writer.addText("\n\n")
+        word_importances_lime = explainer_text.explain_instance(
+            char_trf.tensor_to_string(tensor_sentence),
+            predict_ss_fn, num_features=4).as_map()[1]
+        dic = dict(word_importances_lime)
+        sum_importance = sum([abs(v) for v in dic.values()])
+        split_sentence = sentence.split(r'\W+')
+        for idx, word in zip(range(len(split_sentence)), split_sentence):
+            if (idx in dic.keys()):
+                if dic[idx] > 0:
+                    tex_char = "{\color[rgb]{" + str(round(min(dic[idx] / sum_importance * 100, 1), 3)) + ",0,0} " + word + "}"
+                else:
+                    tex_char = "{\color[rgb]{0,0," + str(round(min(-dic[idx] / sum_importance * 100, 1), 3)) + "} " + word + "}"
+            else:
+                tex_char = word
+            tex_writer.addText(" " + tex_char)
 
 
 
