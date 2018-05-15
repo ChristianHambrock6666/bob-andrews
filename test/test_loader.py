@@ -3,6 +3,7 @@ from core.config import Config
 import core.loader as ld
 import numpy as np
 
+
 class TestLoader(TestCase):
 
     def test_event(self):
@@ -11,6 +12,23 @@ class TestLoader(TestCase):
 
         self.assertTrue(event1 == event1, msg='test_event equal failed')
         self.assertFalse(event1 == event2, msg='test_event unequal failed')
+
+    def test_get_next_train_batch_sample(self):
+        np.random.seed(0)
+        cf = Config()
+        cf.url_train_data = './resources/train_data.txt'
+        cf.url_test_data = './resources/test_data.txt'
+        cf.allowed_chars = 'abc'
+        cf.string_length = 3
+
+        test_loader = ld.Loader(cf)
+
+        feature_batch, label_batch = test_loader.get_next_train_batch_sample(2)
+
+        np.testing.assert_array_equal(np.array([[[1., 0., 0., 0.], [1., 0., 0., 0.], [1., 0., 0., 0.]],
+                                                [[1., 0., 0., 0.], [1., 0., 0., 0.], [1., 0., 0., 0.]]]), feature_batch,
+                                      err_msg="retrieved features wrong")
+        np.testing.assert_array_equal(np.array([[1., 0.], [1., 0.]]), label_batch, err_msg="retrieved labels wrong")
 
     def test_batching(self):
         cf = Config()
@@ -53,7 +71,6 @@ class TestLoader(TestCase):
         self.assertTrue(loader.batches == 3, msg='batches counter failed')
         self.assertTrue(loader.events == 6, msg='events counter failed')
 
-
     def test__prepare_text_input(self):
         cf = Config()
         cf.string_length = 3
@@ -68,9 +85,6 @@ class TestLoader(TestCase):
         self.assertTrue(list(np.array(returned_labels).shape) == [2, 2], msg='label shape correctness')
 
 
-
-
-
 class TestCharTrf(TestCase):
     def test___init__(self):
         test_chartrf = ld.CharTrf(allowed_chars="abc")
@@ -82,7 +96,8 @@ class TestCharTrf(TestCase):
     def test_string_to_tensor(self):
         test_chartrf = ld.CharTrf(allowed_chars="abc")
         test_tensor = test_chartrf.string_to_tensor("ac d")
-        expected_tensor = np.array([[0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]])
+        expected_tensor = np.array(
+            [[0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]])
 
         self.assertTrue(np.array_equal(test_tensor, expected_tensor), msg='translate string to tensor')
 

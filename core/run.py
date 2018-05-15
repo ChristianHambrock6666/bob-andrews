@@ -1,3 +1,4 @@
+import re
 import subprocess
 import tensorflow as tf
 import numpy as np
@@ -37,7 +38,7 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
     while loader.epochs < cf.epochs:
-        batch_x, batch_y = loader.get_next_train_batch(cf.batch_size, shuffle=cf.shuffle)
+        batch_x, batch_y = loader.get_next_train_batch_sample(cf.batch_size)
         current_output = trainer.train(sess, batch_x, batch_y)
 
         output_map_batch["batch_count"].append(loader.batches)
@@ -90,24 +91,22 @@ with tf.Session() as sess:
         ss = txt_sentence
         while len(ss) < 200:
             ss = ss + " "
+        print(ss)
         ret = np.array(evaluator.predict(sess, char_trf.string_to_tensor(ss)))
         return ret
 
     predict_ss_fn = lambda txt_sentences: np.array([predict_text_fn(txt_sentence) for txt_sentence in txt_sentences])
 
 
-    # predict_from_text_fn = lambda txt_sentence: np.array([
-    #     np.array(evaluator.predict(sess, char_trf.string_to_tensor(txt_sentence)))
-    #     for txt_sentence in txt_sentence])
     explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['absent', 'contained'],
                                                        feature_names=feature_names,
                                                        categorical_features=categorical_features,
                                                        categorical_names=categorical_names, kernel_width=None, verbose=False)
 
-    explainer_text = lime.lime_text.LimeTextExplainer()
+    explainer_text = lime.lime_text.LimeTextExplainer(split_expression=r'\W+')
 
-    for tensor_sentence, truth in zip(test_features[:100], test_labels[:100]):
-        sentence = char_trf.tensor_to_string(tensor_sentence)
+    for tensor_sentence, truth in zip(test_features[50:100], test_labels[50:100]):
+        sentence = char_trf.tensor_to_string(tensor_sentence).replace("-", " ")
         print(sentence)
 
         # --------OLD:-------------------------------------------------------
@@ -142,12 +141,15 @@ with tf.Session() as sess:
 
         # --------LIME Text:-------------------------------------------------------
         tex_writer.addText("\n\n")
+        sentence = re.sub(r'\W+', " ", sentence)
         word_importances_lime = explainer_text.explain_instance(
-            char_trf.tensor_to_string(tensor_sentence),
-            predict_ss_fn, num_features=4).as_map()[1]
+            sentence,
+            predict_ss_fn,
+            num_features=5).as_map()[1]
         dic = dict(word_importances_lime)
+        print(dic)
         sum_importance = sum([abs(v) for v in dic.values()])
-        split_sentence = sentence.split(r'\W+')
+        split_sentence = re.split(r'\W+', sentence)
         for idx, word in zip(range(len(split_sentence)), split_sentence):
             if (idx in dic.keys()):
                 if dic[idx] > 0:

@@ -17,7 +17,7 @@ class Config:
 
         self.n_classes = 2  # final classes to predict
 
-        self.epochs = 100  # number of epochs (epoch = whole train data processed) to train
+        self.epochs = 50  # number of epochs (epoch = whole train data processed) to train
         self.shuffle = True  # True if after each epoch train data is shuffled
 
         self.batch_size = 50
@@ -34,6 +34,8 @@ class Config:
 
         self.url_train_data = '../data/train_data.txt'
         self.url_test_data = '../data/test_data.txt'
+
+        self.sigma_chars = 150  # if a random string is drawn it has length string length - normal distribution with std sigma chars
 
     def to_tex(self):
         """just latex code with the config parameters explained"""

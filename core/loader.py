@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import struct
+from random import randint
+
 import numpy as np
 from array import array
 import tensorflow as tf
@@ -34,13 +37,16 @@ class Loader(object):
 
         self.cf = config
 
-        self.ct = CharTrf(self.cf.allowed_chars, self.cf.default_char)
+        self.ct = CharTrf(config)
 
         with open(self.cf.url_train_data, 'r') as f:
-            self.train_text = str(f.read()).replace(r"\n", " ").replace("  ", "_").lower()
+            self.train_text = re.sub(r'\W+', " ", str(f.read()).lower())
+            self.train_text = re.sub(r'[^' + self.cf.allowed_chars + ']', "-", self.train_text)
         with open(self.cf.url_test_data, 'r') as f:
-            self.test_text = str(f.read()).replace(r"\n", " ").replace("  ", "_").lower()
+            self.test_text = re.sub(r'\W+', " ", str(f.read()).lower())
+            self.test_text = re.sub(r'[^' + self.cf.allowed_chars + ']', "-", self.test_text)
 
+        self.train_text_length = len(self.train_text)
         self.train_events = self._prepare_text_input(self.train_text)
         self.test_events = self._prepare_text_input(self.train_text)
 
@@ -76,14 +82,36 @@ class Loader(object):
         features = np.array([e.feature for e in train_batch_events], np.float32)
         labels = np.array([e.label for e in train_batch_events], np.float32)
 
+        self.update_processed_state(batch_size)
+
+        if shuffle and self.new_epoch:
+            np.random.shuffle(self.train_events)
+        return features, labels
+
+    def get_random_string(self, text):
+        substract = max(int(abs(np.random.normal(scale=self.cf.sigma_chars))), 0)
+        str_length = self.cf.string_length - substract
+        str_start = randint(0, self.train_text_length - str_length)
+        return text[str_start:str_start + str_length]
+
+    def update_processed_state(self, batch_size):
         if self.events % len(self.train_events) > (self.events + batch_size) % len(self.train_events):
             self.epochs += 1
             self.new_epoch = True
-            if shuffle:
-                np.random.shuffle(self.train_events)
         self.batches += 1
         self.events += batch_size
 
+    def get_next_train_batch_sample(self, batch_size=32):
+        """Generates next train batch by sampling from text random (with varying length)"""
+        self.new_epoch = False
+        features = np.empty((0, self.cf.string_length, self.ct.n_char_classes), np.float32)
+        labels = np.empty((0, self.cf.n_classes), np.float32)
+        for i in range(batch_size):
+            event = self.ct.string_to_event(self.get_random_string(self.train_text))
+            features = np.append(features, [event.feature], axis=0)
+            labels = np.append(labels, [event.label], axis=0)
+
+        self.update_processed_state(batch_size)
         return features, labels
 
     def get_test_data(self):
@@ -101,11 +129,12 @@ class Loader(object):
 class CharTrf(object):
     """Translate strings to tensors (i.e., np.array) and back"""
 
-    def __init__(self, allowed_chars="abcdefghijklmnopqrstuvwxyzäöüß ", default_char='-'):
-        self.n_char_classes = len(allowed_chars) + 1
-        self.default_char = default_char
+    def __init__(self, config):
+        self.n_char_classes = len(config.allowed_chars) + 1
+        self.default_char = config.default_char
+        self.cf = config
 
-        self.allowed_chars = allowed_chars
+        self.allowed_chars = config.allowed_chars
 
         self.char2num = {char: idx + 1 for idx, char in enumerate(self.allowed_chars)}
         self.num2char = {v: k for k, v in self.char2num.items()}
@@ -115,10 +144,10 @@ class CharTrf(object):
         """generate one hot vector of appropriate size (n_char_classes)"""
         zeros = np.zeros(self.n_char_classes)
         np.put(zeros, idx, 1)
-        return zeros
+        return np.array(zeros, np.float32)
 
     def string_to_tensor(self, in_string):
-        return np.array([self.char_to_one_hot(char) for char in in_string])
+        return np.array([self.char_to_one_hot(char) for char in in_string], np.float32)
 
     def tensor_to_numbers(self, in_tensor):
         return [float(np.argmax(vec)) for vec in in_tensor]
@@ -135,3 +164,12 @@ class CharTrf(object):
 
     def char_to_one_hot(self, char):
         return self.char2one_hot.get(char, self.one_hot(0))
+
+    def string_to_event(self, in_string):
+        """Takes text as a single String and builds feature and label."""
+        has_search_terms = ("nicht" in in_string)
+        str_out = in_string.ljust(self.cf.string_length)  # padding
+        if len(str_out) > self.cf.string_length:
+            str_out = str_out[0:self.cf.string_length]
+        chunk_label = np.array([1 - has_search_terms, has_search_terms], np.float32)
+        return Event(self.string_to_tensor(str_out), chunk_label)
