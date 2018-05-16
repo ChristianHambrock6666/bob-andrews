@@ -177,5 +177,5 @@ class CharTrf(object):
     def contains_pattern(self, in_string):
         has_search_terms = False
         for p in self.cf.info_patterns:
-            has_search_terms = (p in in_string)
+            has_search_terms = (p in in_string) or has_search_terms
         return has_search_terms

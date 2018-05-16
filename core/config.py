@@ -35,7 +35,7 @@ class Config:
         self.url_train_data = '../data/train_data.txt'
         self.url_test_data = '../data/test_data.txt'
 
-        self.info_patterns = ["nicht"]
+        self.info_patterns = ["nicht", "schloss", "erfahren"]
 
         self.sigma_chars = 150  # if a random string is drawn it has length string length - normal distribution with std sigma chars
 

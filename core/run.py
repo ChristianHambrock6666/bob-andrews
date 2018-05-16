@@ -44,8 +44,11 @@ with tf.Session() as sess:
     while loader.epochs < cf.epochs:
         batch_x, batch_y = loader.get_next_train_batch_sample(cf.batch_size)
         current_output = trainer.train(sess, batch_x, batch_y, merged)
-        train_writer.add_summary(current_output[4])
+        train_writer.add_summary(current_output[4], loader.batches)
 
+        summary_op = tf.summary.text('tag1', tf.convert_to_tensor('Tag1: Random Text 1' + str(loader.batches)))
+        text = sess.run(summary_op)
+        train_writer.add_summary(text)
 
         output_map_batch["batch_count"].append(loader.batches)
         output_map_batch["accuracy_train"].append(current_output[3])
@@ -58,6 +61,7 @@ with tf.Session() as sess:
             output_map_epoch["batch_count"].append(loader.batches)
             output_map_epoch["cost_test"].append(current_test_output[0])
             output_map_epoch["accuracy_test"].append(current_test_output[1])
+
 
         trainer.print_info_()
 
