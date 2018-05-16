@@ -167,9 +167,15 @@ class CharTrf(object):
 
     def string_to_event(self, in_string):
         """Takes text as a single String and builds feature and label."""
-        has_search_terms = ("nicht" in in_string)
+        has_search_terms = self.contains_pattern(in_string)
         str_out = in_string.ljust(self.cf.string_length)  # padding
         if len(str_out) > self.cf.string_length:
             str_out = str_out[0:self.cf.string_length]
         chunk_label = np.array([1 - has_search_terms, has_search_terms], np.float32)
         return Event(self.string_to_tensor(str_out), chunk_label)
+
+    def contains_pattern(self, in_string):
+        has_search_terms = False
+        for p in self.cf.info_patterns:
+            has_search_terms = (p in in_string)
+        return has_search_terms

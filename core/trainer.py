@@ -31,9 +31,9 @@ class Trainer(object):
         single_loss = tf.pow(prediction - y, 2)
         return tf.reduce_mean(single_loss)
 
-    def train(self, sess, batch_x, batch_y):
+    def train(self, sess, batch_x, batch_y, merge):
         """run the graph build in the constructor"""
-        self.train_output = sess.run([self.optimizer, self.cost, self.network.weights, self.accuracy], feed_dict={self.x: batch_x, self.y: batch_y})
+        self.train_output = sess.run([self.optimizer, self.cost, self.network.weights, self.accuracy, merge], feed_dict={self.x: batch_x, self.y: batch_y})
         return self.train_output
 
     def test(self, sess, x, y):
