@@ -89,7 +89,7 @@ with tf.Session() as sess:
         word_importance_mapping = dict(
             [(word_importances_lime.domain_mapper.indexed_string.as_list[e], unique_position_to_importance.get(i, 0))
              for i, v in enumerate(word_importances_lime.domain_mapper.indexed_string.positions) for e in v])
-        word_importance_mapping = {k: v for k, v in word_importance_mapping.items() if v[0] != 5}
+        word_importance_mapping = {k: v for k, v in word_importance_mapping.items() if v != 0}
         tb_log_text = sess.run(tf.summary.text('word explanation',
                                                tf.convert_to_tensor(
                                             "sentence: \n" + sentence + "\n\nword explainer result:\n" + str(
@@ -110,5 +110,5 @@ with tf.Session() as sess:
             tex_writer.addText(" " + tex_char)
 
 tex_writer.compile()
-p.terminate()
 subprocess.call(["xdg-open", tex_writer.outputFile])
+input("Press Enter to continue...")
