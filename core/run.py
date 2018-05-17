@@ -93,7 +93,7 @@ with tf.Session() as sess:
         tb_log_text = sess.run(tf.summary.text('word explanation',
                                                tf.convert_to_tensor(
                                             "sentence: \n" + sentence + "\n\nword explainer result:\n" + str(
-                                                {k: decimal.Decimal(round(v, 3)) for k, v in word_importance_mapping.items() if v != 0}))))
+                                                {k: str(round(v, 3)) for k, v in word_importance_mapping.items() if v != 0}))))
         tensorboard_lime_writer.add_summary(tb_log_text)
         split_sentence = re.split(r'\W+', sentence)
         for word in split_sentence:

@@ -64,7 +64,7 @@ class Loader(object):
         chunk = s.read(self.cf.string_length)
         while len(chunk) == self.cf.string_length:
             chunk_vector_rep = self.ct.string_to_tensor(chunk)
-            has_search_terms = ("nicht" in chunk)  # ("schloß" in chunk) or ("landvermesser" in chunk) or
+            has_search_terms = self.ct.contains_pattern(chunk)
             chunk_label = [1 - has_search_terms, has_search_terms]
 
             events.append(Event(chunk_vector_rep, chunk_label))
@@ -173,9 +173,9 @@ class CharTrf(object):
 
     def string_to_event(self, in_string):
         """Takes text as a single String and builds feature and label."""
-        b = self.contains_pattern(in_string)
+        truth = self.contains_pattern(in_string)
         str_tensor = self.string_to_tensor(self.string_to_const_length(in_string))
-        chunk_label = np.array([1 - b, b], np.float32)
+        chunk_label = np.array([1 - truth, truth], np.float32)
         return Event(str_tensor, chunk_label)
 
     def contains_pattern(self, in_string):
