@@ -10,6 +10,8 @@ __pycache__
 *.out  
 *.toc
 *.gz
+*.nav
+*.snm
 *.auxlog
 *.auxlock
 /output/TMPfigures/
