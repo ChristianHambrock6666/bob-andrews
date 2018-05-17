@@ -47,7 +47,7 @@ class Loader(object):
             self.test_text = re.sub(r'[^' + self.cf.allowed_chars + ']', "-", self.test_text)
 
         self.train_text_length = len(self.train_text)
-        self.train_events = self._prepare_text_input(self.train_text)
+        self.tot_train_events = round(self.train_text_length / self.cf.string_length)
         self.test_events = self._prepare_text_input(self.train_text)
 
         self.epochs = 0
@@ -59,34 +59,15 @@ class Loader(object):
     def _prepare_text_input(self, text_content):
         """Takes text as a single long String and builds features and labels."""
         events = []
-
         s = StringIO(text_content)
         chunk = s.read(self.cf.string_length)
         while len(chunk) == self.cf.string_length:
             chunk_vector_rep = self.ct.string_to_tensor(chunk)
             has_search_terms = self.ct.contains_pattern(chunk)
             chunk_label = [1 - has_search_terms, has_search_terms]
-
             events.append(Event(chunk_vector_rep, chunk_label))
-
             chunk = s.read(self.cf.string_length)
         return np.array(events)
-
-    def get_next_train_batch(self, batch_size=32, shuffle=False):
-        """Generates next train batch and starts from beginning after one epoch (shuffle if wanted)"""
-
-        self.new_epoch = False
-
-        train_batch_events = self.train_events[:batch_size]
-        self.train_events = np.roll(self.train_events, batch_size)
-        features = np.array([e.feature for e in train_batch_events], np.float32)
-        labels = np.array([e.label for e in train_batch_events], np.float32)
-
-        self.update_processed_state(batch_size)
-
-        if shuffle and self.new_epoch:
-            np.random.shuffle(self.train_events)
-        return features, labels
 
     def get_random_string(self, text):
         substract = max(int(abs(np.random.normal(scale=self.cf.sigma_chars))), 0)
@@ -95,7 +76,7 @@ class Loader(object):
         return text[str_start:str_start + str_length]
 
     def update_processed_state(self, batch_size):
-        if self.events % len(self.train_events) > (self.events + batch_size) % len(self.train_events):
+        if self.events % self.tot_train_events > (self.events + batch_size) % self.tot_train_events:
             self.epochs += 1
             self.new_epoch = True
         self.batches += 1
@@ -116,10 +97,8 @@ class Loader(object):
 
     def get_test_data(self):
         """just give out the whole test data in one batch"""
-
         features = np.array([event.feature for event in self.test_events], np.float32)
         labels = np.array([event.label for event in self.test_events], np.float32)
-
         return features, labels
 
     def get_train_sentence_char_lists(self):

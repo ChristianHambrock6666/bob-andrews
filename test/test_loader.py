@@ -30,47 +30,6 @@ class TestLoader(TestCase):
                                       err_msg="retrieved features wrong")
         np.testing.assert_array_equal(np.array([[1., 0.], [1., 0.]]), label_batch, err_msg="retrieved labels wrong")
 
-    def test_batching(self):
-        cf = Config()
-
-        event1 = ld.Event(1, 5)
-        event2 = ld.Event(2, 6)
-        event3 = ld.Event(3, 7)
-        event4 = ld.Event(4, 8)
-
-        test_loader = ld.Loader(cf)
-
-        test_loader.train_events = np.array([event1, event2, event3, event4])
-
-        feature_batch, label_batch = test_loader.get_next_train_batch(2)
-
-        np.testing.assert_array_equal(np.array([1, 2]), feature_batch, err_msg="retrieved features wrong")
-        np.testing.assert_array_equal(np.array([5, 6]), label_batch, err_msg="retrieved labels wrong")
-
-        np.testing.assert_array_equal(
-            np.array([event3, event4, event1, event2]),
-            test_loader.train_events,
-            err_msg="remaining events wrong")
-
-    def test_counters(self):
-        cf = Config()
-
-        event1 = ld.Event(1, 5)
-        event2 = ld.Event(2, 6)
-        event3 = ld.Event(3, 7)
-        event4 = ld.Event(4, 8)
-
-        loader = ld.Loader(cf)
-
-        loader.train_events = np.array([event1, event2, event3, event4])
-        loader.get_next_train_batch(2)
-        loader.get_next_train_batch(2)
-        loader.get_next_train_batch(2)
-
-        self.assertTrue(loader.epochs == 1, msg='epochs counter failed')
-        self.assertTrue(loader.batches == 3, msg='batches counter failed')
-        self.assertTrue(loader.events == 6, msg='events counter failed')
-
     def test__prepare_text_input(self):
         cf = Config()
         cf.string_length = 3
