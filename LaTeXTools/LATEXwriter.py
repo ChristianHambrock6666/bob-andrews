@@ -296,6 +296,7 @@ class LATEXwriter:
 
         retText = '\documentclass[a4paper,' + str(o.fontSize) + 'pt,twoside]{article} \n' \
                                                                 '\\usepackage[headsep=2.5cm,headheight=2cm]{geometry}\n\\geometry{a4paper, left=25mm, top=50mm, bottom=20mm, right=25mm}\n' \
+                                                                '\\usepackage[utf8]{inputenc}\n' \
                                                                 '\\usepackage[absolute]{textpos}\n' \
                                                                 '\\usepackage{amsmath}\n' \
                                                                 '\\usepackage{amssymb}\n' \
@@ -326,7 +327,6 @@ class LATEXwriter:
                                                                                                '\\usepackage{sectsty}\n' \
                                                                                                '\\usepackage[table]{xcolor}\n' \
                                                                                                '\\usepackage{textcomp}\n' \
-                                                                                               '\\usepackage[utf8]{inputenc}\n' \
                                                                                                '\\usepackage{xcolor}\n' \
                                                                                                '\\usepackage{pgfplots}\n' \
                                                                                                '\\usepackage[explicit]{titlesec}\n' \
@@ -506,7 +506,7 @@ class LATEXwriter:
         for i in range(0, len(locColorKeyList)):
             col = o.ColorMap[locColorKeyList[i]]
             s = s.replace('KEYDefinedColors', '\definecolor{' + locColorKeyList[i][2:] + '}{rgb}{' + (
-            col[13: - 2]) + '}\n' + 'KEYDefinedColors')  # e.g., \definecolor{Blue}{rgb}{0.05 0.3 0.6}
+                col[13: - 2]) + '}\n' + 'KEYDefinedColors')  # e.g., \definecolor{Blue}{rgb}{0.05 0.3 0.6}
             s = s.replace(locColorKeyList[i] + '{',
                           '{' + o.ColorMap[locColorKeyList[i]])  # shifting the "{" for latex purposes.
 

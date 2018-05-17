@@ -47,32 +47,3 @@ class Evaluator(object):
             character_importance.append(diff_to_pred0)
 
         return character_importance, pred0
-
-    def setup_lime_explainer(self, sess, train_data):
-        data = train_data
-
-        for j, names in enumerate(self.categorical_names):
-            data[:, j] = np.array(list(map(lambda x: x, data[:, j])))
-
-        data = data.astype(float)
-
-        return None
-
-    def importanize_tensor_sentence_lime(self, sess, train_data):
-        """check character importance for sentence. tensor_batch: [batch_size, num_letters, num_chars]"""
-
-        data = np.array(list(map(lambda x: x, sentence_list)))
-        data = data.astype(float)
-
-        pred_fn = lambda x: sess.run(self.pred, feed_dict={self.x: [self.ct.string_to_tensor(''.join(sentence_list))]})[
-            0].astype(float)
-
-        explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['false', 'true'],
-                                                           feature_names=self.feature_names,
-                                                           categorical_features=self.categorical_features,
-                                                           categorical_names=self.categorical_names, kernel_width=3,
-                                                           verbose=False)
-
-        i = 127
-        exp = explainer.explain_instance(test[i], pred_fn, num_features=5)
-        exp.save_to_file("test")

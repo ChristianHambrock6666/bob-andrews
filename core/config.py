@@ -1,3 +1,6 @@
+import datetime
+import os
+
 import tensorflow as tf
 from core import loader
 
@@ -39,6 +42,8 @@ class Config:
 
         self.sigma_chars = 150  # if a random string is drawn it has length string length - normal distribution with std sigma chars
 
+        self.tb_dir = os.getcwd() + "/.././output/tensorboard/" + datetime.datetime.now().strftime("%I:%M%p_on_%B_%d_%Y")
+
     def to_tex(self):
         """just latex code with the config parameters explained"""
 
@@ -50,6 +55,7 @@ class Config:
         \\item[{\\bf batch size:}] """ + str(self.batch_size) + """
         \\item[{\\bf shuffle:}] """ + str(self.shuffle) + """
         \\item[{\\bf learning rate:}] """ + str(self.learning_rate) + """
+        \\item[{\\bf tensorboard files:}] """ + str(self.tb_dir).replace("_", "\\textunderscore ") + """
         \\end{itemize}
         \n
         """

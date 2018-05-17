@@ -9,7 +9,9 @@ __pycache__
 *.log
 *.out  
 *.toc
+*.gz
 *.auxlog
 *.auxlock
 /output/TMPfigures/
 /venv/
+events.out.tfevents.*
