@@ -5,7 +5,7 @@ import numpy as np
 import sklearn.datasets
 import sklearn.ensemble
 from sklearn.ensemble import RandomForestClassifier
-
+import os
 import core.loader as ld
 import core.trainer as tn
 import core.network as nw
@@ -13,15 +13,13 @@ import core.config as cf
 import core.evaluator as ev
 import matplotlib.pyplot as plt
 from LaTeXTools.LATEXwriter import LATEXwriter as TeXwriter
-
 import lime
 import lime.lime_text
 import lime.lime_tabular
+import datetime
+tb_dir = ".././output/tensorboard/" + datetime.datetime.now().strftime("%I:%M%p_on_%B_%d_%Y")
+os.mkdir(tb_dir)
 
-np.random.seed(1)
-
-output_map_batch = {"batch_count": [], "accuracy_train": [], "cost_train": []}
-output_map_epoch = {"epoch": [], "batch_count": [], "cost_test": [], "accuracy_test": []}
 
 cf = cf.Config()
 tex_writer = TeXwriter(".././output", "doc")
@@ -34,50 +32,25 @@ trainer = tn.Trainer(cf, network)
 evaluator = ev.Evaluator(cf, network, char_trf)
 test_features, test_labels = loader.get_test_data()
 
+tf.summary.scalar("accuracy", trainer.accuracy)
+merged = tf.summary.merge_all()
+
+
 with tf.Session() as sess:
-    tf.summary.scalar("accuracy", trainer.accuracy)
-    merged = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter('../output', sess.graph)
 
     sess.run(tf.global_variables_initializer())
+    train_writer = tf.summary.FileWriter('../output/test1', sess.graph)
 
     while loader.epochs < cf.epochs:
         batch_x, batch_y = loader.get_next_train_batch_sample(cf.batch_size)
-        current_output = trainer.train(sess, batch_x, batch_y, merged)
-        train_writer.add_summary(current_output[4], loader.batches)
-
-        summary_op = tf.summary.text('tag1', tf.convert_to_tensor('Tag1: Random Text 1' + str(loader.batches)))
-        text = sess.run(summary_op)
-        train_writer.add_summary(text)
-
-        output_map_batch["batch_count"].append(loader.batches)
-        output_map_batch["accuracy_train"].append(current_output[3])
-        output_map_batch["cost_train"].append(current_output[1])
+        current_output = trainer.train(sess, batch_x, batch_y, train_writer)
 
         if loader.new_epoch:
             current_test_output = trainer.test(sess, test_features, test_labels)
-
-            output_map_epoch["epoch"].append(loader.epochs)
-            output_map_epoch["batch_count"].append(loader.batches)
-            output_map_epoch["cost_test"].append(current_test_output[0])
-            output_map_epoch["accuracy_test"].append(current_test_output[1])
+            # TODO
 
 
         trainer.print_info_()
-
-    # evaluator.setup_lime_explainer(sess, loader.get_train_sentence_char_lists())
-    #  ------- information part just for visualization ------------------------------------------------------------
-    # plot loss and accuracy
-    tex_writer.addSection("Convergence plots")
-    fig, ax1 = plt.subplots()
-    ax1.plot(output_map_batch["batch_count"], output_map_batch["accuracy_train"])
-    ax1.plot(output_map_epoch["batch_count"], output_map_epoch["accuracy_test"])
-    ax1.plot(output_map_batch["batch_count"], output_map_batch["cost_train"])
-    ax1.plot(output_map_epoch["batch_count"], output_map_epoch["cost_test"])
-    plt.xlabel('batch')
-    plt.ylabel('cost/accuracy')
-    plt.plot()
-    tex_writer.addFigure(fig, caption="Accuracy/loss of the training (blue/green) and the test (orange/red) data.")
 
     # colorize text examples
     tex_writer.addSection("Text examples")
@@ -103,12 +76,8 @@ with tf.Session() as sess:
         ss = txt_sentence
         while len(ss) < 200:
             ss = ss + " "
-        if len(ss) > 200:
-            print(ss)
-            ss = ss[0:200]
         ret = np.array(evaluator.predict(sess, char_trf.string_to_tensor(ss)))
         return ret
-
 
     predict_ss_fn = lambda txt_sentences: np.array([predict_text_fn(txt_sentence) for txt_sentence in txt_sentences])
     explainer = lime.lime_tabular.LimeTabularExplainer(train, class_names=['absent', 'contained'],
@@ -120,6 +89,9 @@ with tf.Session() as sess:
         split_expression=r'\W+'
         # bow=False  # default True: then words will loose order and double words will be removed as I understand
     )
+
+    text = sess.run(tf.summary.text('tag1', tf.convert_to_tensor('Tag1: Random Text 1' + str(loader.batches))))
+    train_writer.add_summary(text)
 
     for tensor_sentence, truth in zip(test_features[50:100], test_labels[50:100]):
         sentence = char_trf.tensor_to_string(tensor_sentence).replace("-", " ")

@@ -165,14 +165,18 @@ class CharTrf(object):
     def char_to_one_hot(self, char):
         return self.char2one_hot.get(char, self.one_hot(0))
 
-    def string_to_event(self, in_string):
-        """Takes text as a single String and builds feature and label."""
-        has_search_terms = self.contains_pattern(in_string)
-        str_out = in_string.ljust(self.cf.string_length)  # padding
+    def string_to_const_length(self, in_string):
+        str_out = in_string.ljust(self.cf.string_length)
         if len(str_out) > self.cf.string_length:
             str_out = str_out[0:self.cf.string_length]
-        chunk_label = np.array([1 - has_search_terms, has_search_terms], np.float32)
-        return Event(self.string_to_tensor(str_out), chunk_label)
+        return str_out
+
+    def string_to_event(self, in_string):
+        """Takes text as a single String and builds feature and label."""
+        b = self.contains_pattern(in_string)
+        str_tensor = self.string_to_tensor(self.string_to_const_length(in_string))
+        chunk_label = np.array([1 - b, b], np.float32)
+        return Event(str_tensor, chunk_label)
 
     def contains_pattern(self, in_string):
         has_search_terms = False
