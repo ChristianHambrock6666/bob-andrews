@@ -68,7 +68,7 @@ with tf.Session() as sess:
     predict_texts_fn = lambda txt_sentences: np.array([predict_text_fn(txt_sentence) for txt_sentence in txt_sentences])
     explainer_text = lime.lime_text.LimeTextExplainer(split_expression=r'\W+')
 
-    for tensor_sentence, truth in zip(test_features[50:100], test_labels[50:100]):
+    for tensor_sentence, truth in zip(test_features[50:80], test_labels[50:80]):
         sentence = char_trf.tensor_to_string(tensor_sentence).replace("-", " ")
         print(sentence)
 

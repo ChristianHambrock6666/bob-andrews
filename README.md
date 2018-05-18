@@ -11,12 +11,19 @@ A sufficient (according to needed packages in the LATEXWriter) installation of l
 The fastest way to obtain conda is to install [Miniconda](https://conda.io/miniconda.html).
 
 ## Setup 
-
 A script for easy installation of the conda enviroments is included.
-
 ```bash
 ./setup.sh
 ```
 
+
+## tensorboard
+Beside LaTeX, we use tensorboard for visualization during training.  
+You can activate it and make it visualize all stored log-files via, e.g., (adjust paths and envs):
+```bash
+bash -c "source /home/chambroc/miniconda3/bin/activate bob && tensorboard --logdir=./output/tensorboard"
+```
+
+
 ## References
-* Talk given 2017.11, see https://gitlab.lhotse.ov.otto.de/tesla/information-hub/tree/master/presentations/17_11_bob-andrews.
+* see slides in doc folder

@@ -14,7 +14,7 @@ class Config:
         self.syllable_length = 3    # number of characters in 'syllable'
 
         self.n_words = 20      # number of patterns which are combined 'syllables'
-        self.word_length = 2  # number of 'syllables' in each pattern
+        self.word_length = 3  # number of 'syllables' in each pattern
 
         self.output_number = 100  # dimension of fully connected pre-output layer
 
@@ -38,7 +38,7 @@ class Config:
         self.url_train_data = '../data/train_data.txt'
         self.url_test_data = '../data/test_data.txt'
 
-        self.info_patterns = ["nicht", "schloss", "erfahren"]
+        self.info_patterns = ["nicht", "schloß"]
 
         self.sigma_chars = 150  # if a random string is drawn it has length string length - normal distribution with std sigma chars
 
