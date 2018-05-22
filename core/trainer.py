@@ -34,11 +34,13 @@ class Trainer(object):
     def _initialize_tensorboard(self):
         tf.summary.scalar("accuracy", self.accuracy)
         tf.summary.scalar("cost", self.cost)
-        for cat in range(self.y.shape[1]):  # this is apparently for all classes which I find weird but it works
-            summary_lib.pr_curve(name='pr-curves',
-                     predictions=self.pred[:, cat],
-                     labels=tf.cast(self.y[:, cat], tf.bool),
-                     num_thresholds=self.cf.num_thresholds)
+        # for cat in range(self.y.shape[1]):  # this is apparently for all classes which I find weird but it works
+        summary_lib.pr_curve(name='pr-curves',
+                             predictions=self.pred[:, 1],
+                             labels=tf.cast(self.y[:, 1], tf.bool),
+                             num_thresholds=self.cf.num_thresholds,
+                             display_name="pr-curve (train, test)",
+                             description="Precision versus recall with respective cutoff. Hover over graph for details.")
         self.merged = tf.summary.merge_all()
 
     def _loss_(self, prediction, y):

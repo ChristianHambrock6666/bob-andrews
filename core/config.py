@@ -20,8 +20,7 @@ class Config:
         self.n_classes = 2  # final classes to predict
         self.num_thresholds = 30
 
-        self.epochs = 10  # number of epochs (epoch = whole train data processed) to train
-        self.shuffle = True  # True if after each epoch train data is shuffled
+        self.epochs = 50  # number of epochs (epoch = whole train data processed) to train
 
         self.batch_size = 50
 
@@ -50,8 +49,7 @@ class Config:
         General parameters of the config:
         \n
         * epochs: """ + str(self.epochs) + """
-        * batch size: """ + str(self.batch_size) + """
-        * shuffle: """ + str(self.shuffle) + """
+        * batch size: """ + str(self.batch_size) + """ 
         * learning rate: """ + str(self.learning_rate) + """
         * tensorboard files: """ + str(self.tb_dir) + """
         \n
@@ -91,8 +89,7 @@ class Config:
         \n
         \\begin{itemize}
         \\item[{\\bf epochs:}] """ + str(self.epochs) + """
-        \\item[{\\bf batch size:}] """ + str(self.batch_size) + """
-        \\item[{\\bf shuffle:}] """ + str(self.shuffle) + """
+        \\item[{\\bf batch size:}] """ + str(self.batch_size) + """ 
         \\item[{\\bf learning rate:}] """ + str(self.learning_rate) + """
         \\item[{\\bf tensorboard files:}] """ + str(self.tb_dir).replace("_", "\\textunderscore ") + """
         \\end{itemize}
