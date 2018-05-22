@@ -27,9 +27,11 @@ os.mkdir(cf.tb_dir)
 os.mkdir(cf.tb_dir + "/train")
 os.mkdir(cf.tb_dir + "/test")
 os.mkdir(cf.tb_dir + "/lime")
+os.mkdir(cf.tb_dir + "/log")
 p = Process(target=launchTensorBoard, args=(cf.tb_dir,))
 p.start()
 tensorboard_train_writer = tf.summary.FileWriter(cf.tb_dir + "/train")
+tensorboard_log_writer = tf.summary.FileWriter(cf.tb_dir + "/log")
 tensorboard_test_writer = tf.summary.FileWriter(cf.tb_dir + "/test")
 tensorboard_lime_writer = tf.summary.FileWriter(cf.tb_dir + "/lime")
 
@@ -45,6 +47,8 @@ test_features, test_labels = loader.get_test_data()
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
+    tb_log_text = sess.run(tf.summary.text('info', tf.convert_to_tensor(cf.to_string())))
+    tensorboard_log_writer.add_summary(tb_log_text)
 
     while loader.epochs < cf.epochs:
         batch_x, batch_y = loader.get_next_train_batch_sample(cf.batch_size)
@@ -54,6 +58,7 @@ with tf.Session() as sess:
             current_test_output = trainer.test(sess, test_features, test_labels, tensorboard_test_writer)
             print("epochs: " + str(loader.epochs))
 
+    tensorboard_log_writer.add_summary(sess.run(tf.summary.text('info', tf.convert_to_tensor("finished training"))))
     tex_writer.addSection("Text examples")
     tex_writer.addText("""The text is colored red if the character was important for the prediction in the following sense:\n\n
     The character is removed (set to default). The prediction is thus changed. 
@@ -108,6 +113,8 @@ with tf.Session() as sess:
             if char_trf.contains_pattern(word):
                 tex_char = "\\framebox{" + tex_char + "}"
             tex_writer.addText(" " + tex_char)
+
+    tensorboard_log_writer.add_summary(sess.run(tf.summary.text('info', tf.convert_to_tensor("closing session"))))
 
 tex_writer.compile()
 subprocess.call(["xdg-open", tex_writer.outputFile])

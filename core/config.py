@@ -9,18 +9,18 @@ class Config:
     """Contains static configurations"""
 
     def __init__(self):
-
         self.n_syllables = 30  # number of patterns in first layer, which is a combination of some characters, i.e., something like a syllable
-        self.syllable_length = 3    # number of characters in 'syllable'
+        self.syllable_length = 4  # number of characters in 'syllable'
 
-        self.n_words = 20      # number of patterns which are combined 'syllables'
-        self.word_length = 3  # number of 'syllables' in each pattern
+        self.n_words = 20  # number of patterns which are combined 'syllables'
+        self.word_length = 2  # number of 'syllables' in each pattern
 
-        self.output_number = 100  # dimension of fully connected pre-output layer
+        self.output_number = 200  # dimension of fully connected pre-output layer
 
         self.n_classes = 2  # final classes to predict
+        self.num_thresholds = 30
 
-        self.epochs = 50  # number of epochs (epoch = whole train data processed) to train
+        self.epochs = 10  # number of epochs (epoch = whole train data processed) to train
         self.shuffle = True  # True if after each epoch train data is shuffled
 
         self.batch_size = 50
@@ -38,11 +38,50 @@ class Config:
         self.url_train_data = '../data/train_data.txt'
         self.url_test_data = '../data/test_data.txt'
 
-        self.info_patterns = ["nicht", "schloß"]
+        self.info_patterns = ["nicht", "schloß", "landvermesser"]
 
         self.sigma_chars = 150  # if a random string is drawn it has length string length - normal distribution with std sigma chars
 
-        self.tb_dir = os.getcwd() + "/.././output/tensorboard/" + datetime.datetime.now().strftime("%I:%M%p_on_%B_%d_%Y")
+        self.tb_dir = os.getcwd() + "/.././output/tensorboard/" + datetime.datetime.now().strftime(
+            "%I:%M%p_on_%B_%d_%Y")
+
+    def to_string(self):
+        return_string = """
+        General parameters of the config:
+        \n
+        * epochs: """ + str(self.epochs) + """
+        * batch size: """ + str(self.batch_size) + """
+        * shuffle: """ + str(self.shuffle) + """
+        * learning rate: """ + str(self.learning_rate) + """
+        * tensorboard files: """ + str(self.tb_dir) + """
+        \n
+        """
+
+        return_string = return_string + """
+        Data description parameters of the config:
+        \n
+        * allowed chars: """ + self.allowed_chars + """
+        * parsing words: """ + str(self.info_patterns) + """
+        * number of targets: """ + str(self.n_classes) + """
+        * number of character classes: """ + str(self.n_chars) + """ (one more than char count for the generic class)
+        * number of thresholds: """ + str(self.num_thresholds) + """ (for pr evaluation)
+        \n
+        """
+
+        return_string = return_string + """
+        Network description parameters of the config:
+        \n
+        * n syllables: """ + str(self.n_syllables) + """ number of patterns in first layer, which is a combination of some characters, i.e., something like a syllable
+        * syllable length: """ + str(self.syllable_length) + """ number of characters in 'syllable'
+        * n words: """ + str(self.n_words) + """ number of 'word' patterns which are combined 'syllables'
+        * word length: """ + str(self.word_length) + """ number of 'syllables' in each 'word' pattern
+        * output number: """ + str(self.word_length) + """ dimension of fully connected pre-output layer
+        * strides 1: """ + str(self.strides1) + """ strides in the first layer along the 'sentence'
+        * strides 2: """ + str(self.strides2) + """ strides in the second layer along the 'syllables'
+        \n
+        """
+
+        return return_string
 
     def to_tex(self):
         """just latex code with the config parameters explained"""
@@ -67,6 +106,7 @@ class Config:
         \\item[{\\bf allowed chars:}] """ + self.allowed_chars + """
         \\item[{\\bf number of targets:}] """ + str(self.n_classes) + """
         \\item[{\\bf number of character classes:}] """ + str(self.n_chars) + """ (one more than char count for the generic class)
+        \\item[{\\bf number of thresholds:}] """ + str(self.num_thresholds) + """ (for pr evaluation)
         \\end{itemize}
         \n
         """

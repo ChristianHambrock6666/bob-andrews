@@ -2,6 +2,8 @@ import tensorflow as tf
 import sys
 import os
 from os import listdir
+from tensorboard import summary as summary_lib
+
 
 class Trainer(object):
 
@@ -16,7 +18,6 @@ class Trainer(object):
         self.test_output = None
         self._initialize_graph()  # STATE!
         self._initialize_tensorboard()  # STATE!
-
 
     def _initialize_graph(self):
         """build graph"""
@@ -33,11 +34,16 @@ class Trainer(object):
     def _initialize_tensorboard(self):
         tf.summary.scalar("accuracy", self.accuracy)
         tf.summary.scalar("cost", self.cost)
+        for cat in range(self.y.shape[1]):  # this is apparently for all classes which I find weird but it works
+            summary_lib.pr_curve(name='pr-curves',
+                     predictions=self.pred[:, cat],
+                     labels=tf.cast(self.y[:, cat], tf.bool),
+                     num_thresholds=self.cf.num_thresholds)
         self.merged = tf.summary.merge_all()
 
     def _loss_(self, prediction, y):
         """loss function only taken out of initialize_graph because of more singular importance... private, dont touch, dont need to!"""
-        #single_loss = tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)
+        # single_loss = tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)
         single_loss = tf.pow(prediction - y, 2)
         return tf.reduce_mean(single_loss)
 
@@ -55,9 +61,7 @@ class Trainer(object):
         tensorboard_writer.flush()
         return self.test_output
 
-
     def print_info_(self):
         """wip"""
         print("--------------------------------------------------------------")
         print("merged:", self.train_output[1])
-
