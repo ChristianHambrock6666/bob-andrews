@@ -9,11 +9,11 @@ class Config:
     """Contains static configurations"""
 
     def __init__(self):
-        self.n_syllables = 30  # number of patterns in first layer, which is a combination of some characters, i.e., something like a syllable
+        self.n_syllables = 100  # number of patterns in first layer, which is a combination of some characters, i.e., something like a syllable
         self.syllable_length = 4  # number of characters in 'syllable'
 
-        self.n_words = 20  # number of patterns which are combined 'syllables'
-        self.word_length = 2  # number of 'syllables' in each pattern
+        self.n_words = 100  # number of patterns which are combined 'syllables'
+        self.word_length = 3  # number of 'syllables' in each pattern
 
         self.output_number = 200  # dimension of fully connected pre-output layer
 
@@ -26,8 +26,8 @@ class Config:
 
         self.learning_rate = 0.001
 
-        self.strides1 = 3  # strides in the first layer (chars to 'syllables')
-        self.strides2 = 2  # strides in the second layer ('syllables' to 'words')
+        self.strides1 = 1  # strides in the first layer (chars to 'syllables')
+        self.strides2 = 1  # strides in the second layer ('syllables' to 'words')
 
         self.allowed_chars = "abcdefghijklmnopqrstuvwxyzäöüß "
         self.default_char = '-'  # set this if default char is translated back from tensor

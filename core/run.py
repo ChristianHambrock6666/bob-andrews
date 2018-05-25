@@ -97,17 +97,18 @@ with tf.Session() as sess:
              for i, v in enumerate(word_importances_lime.domain_mapper.indexed_string.positions) for e in v])
         tb_log_text = sess.run(tf.summary.text('word explanation',
                                                tf.convert_to_tensor(
-                                            "sentence: \n" + sentence + "\n\nword explainer result:\n" + str(
-                                                {k: str(round(v, 3)) for k, v in word_importance_mapping.items() if v != 0}))))
+                                                   "sentence: \n" + sentence + "\n\nword explainer result:\n" + str(
+                                                       {k: str(round(v, 3)) for k, v in word_importance_mapping.items()
+                                                        if v != 0}))))
         tensorboard_lime_writer.add_summary(tb_log_text)
         split_sentence = re.split(r'\W+', sentence)
         for word in split_sentence:
             word_importance = word_importance_mapping.get(word, 0)
             if word_importance != 0:
                 if word_importance > 0:
-                    tex_char = "{\color[rgb]{" + str(round(min(word_importance * 100, 1), 3)) + ",0,0} " + word + "}"
+                    tex_char = "{\color[rgb]{" + str(round(min(word_importance, 1), 3)) + ",0,0} " + word + "}"
                 else:
-                    tex_char = "{\color[rgb]{0,0," + str(round(min(-word_importance * 100, 1), 3)) + "} " + word + "}"
+                    tex_char = "{\color[rgb]{0,0," + str(round(min(-word_importance, 1), 3)) + "} " + word + "}"
             else:
                 tex_char = word
             if char_trf.contains_pattern(word):
